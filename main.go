@@ -73,7 +73,7 @@ func init() {
 	rules = append(rules, NewRule("fabio.http.status.{code}", "fabio.http.status"))
 }
 
-func work(client *datadog.Client) {
+func work(datadogClient *datadog.Client) {
 	for {
 		select {
 		case data := <-workerChannel:
@@ -82,7 +82,7 @@ func work(client *datadog.Client) {
 
 			// loop the metric lines
 			for _, str := range metrics {
-				found := false
+				var found *RuleResult
 
 				// parse into a statsd metrict struct
 				metric := parsePacketString(str)
@@ -97,13 +97,22 @@ func work(client *datadog.Client) {
 						continue
 					}
 
-					found = true
-					log.Printf("Found match for %s!", metric.name)
-					log.Printf("%+v", result)
+					found = result
 					break
 				}
 
-				if found {
+				if found != nil {
+					log.Printf("Found match for %s!", metric.name)
+					log.Printf("%+v", found)
+
+					switch metric.metricType {
+					case metricCount:
+						datadogClient.Count(found.NewPath, int64(metric.value), found.Tags, 1)
+					case metricTiming:
+						datadogClient.Timing(found.NewPath, time.Duration(metric.value), found.Tags, 1)
+					case metricGauge:
+						datadogClient.Gauge(found.NewPath, metric.value, found.Tags, 1)
+					}
 					continue
 				}
 
@@ -111,11 +120,11 @@ func work(client *datadog.Client) {
 
 				switch metric.metricType {
 				case metricCount:
-					client.Count(metric.name, int64(metric.value), noTags, 1)
+					datadogClient.Count(metric.name, int64(metric.value), noTags, 1)
 				case metricTiming:
-					client.Timing(metric.name, time.Duration(metric.value), noTags, 1)
+					datadogClient.Timing(metric.name, time.Duration(metric.value), noTags, 1)
 				case metricGauge:
-					client.Gauge(metric.name, metric.value, noTags, 1)
+					datadogClient.Gauge(metric.name, metric.value, noTags, 1)
 				}
 			}
 		case <-quitChannel:
