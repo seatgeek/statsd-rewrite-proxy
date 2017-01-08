@@ -1,0 +1,19 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "ckEen3vhU+2+XyPlvdop+BLNzQk=",
+			"path": "github.com/DataDog/datadog-go/statsd",
+			"revision": "6ea09a7540648568ce58b3d00eb1da133c2dcdd7",
+			"revisionTime": "2016-12-13T18:18:37Z"
+		},
+		{
+			"checksumSHA1": "FATk9pHT5TZKkoXqCoaQjeNVhnU=",
+			"path": "github.com/cactus/go-statsd-client/statsd",
+			"revision": "d8eabe07bc70ff9ba6a56836cde99d1ea3d005f7",
+			"revisionTime": "2016-10-31T21:59:49Z"
+		}
+	],
+	"rootPath": "github.com/jippi/statsd-rewrite-proxy"
+}
