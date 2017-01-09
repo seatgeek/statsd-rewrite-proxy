@@ -162,7 +162,7 @@ func work(dataDogClient *datadog.Client, workerID int) {
 					}
 
 					ruleHitsSuccess.Add(1)
-					logger.Debugf("[%d] Found match for '%s', emitting as '%s' (value: %+v | >> %+v <<)", workerID, metric.name, result.name, metric.value, metric.raw)
+					logger.Debugf("[%d] Found match for '%s', emitting as '%s'", workerID, metric.name, result.name)
 
 					switch metric.metricType {
 					case metricTypeCount:
@@ -183,7 +183,7 @@ func work(dataDogClient *datadog.Client, workerID int) {
 
 				ruleHitsMiss.Add(1)
 
-				logger.Warnf("[%d] No match found for '%s', relaying unmodified (value: %+v | >> %+v <<)", workerID, metric.name, metric.value, metric.raw)
+				logger.Warnf("[%d] No match found for '%s', relaying unmodified", workerID, metric.name)
 
 				switch metric.metricType {
 				case metricTypeCount:
