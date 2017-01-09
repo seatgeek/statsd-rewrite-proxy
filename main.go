@@ -77,9 +77,20 @@ func main() {
 }
 
 func createRules() {
+	// fabio rewrites
 	rules = append(rules, NewRule("fabio.{service}.{host}.{path}.{upstream}.{dimension}", "fabio.service.requests.{dimension}"))
 	rules = append(rules, NewRule("fabio.{service}.{host}.{upstream}", "fabio.service.requests"))
 	rules = append(rules, NewRule("fabio.http.status.{code}", "fabio.http.status"))
+
+	// nomad rewrites
+	rules = append(rules, NewRule("nomad.client.uptime.*", "nomad.client.uptime"))
+
+	rules = append(rules, NewRule("nomad.client.host.memmory.*.{nomad_metric}", "nomad.client.memmory.{nomad_metric}"))
+	rules = append(rules, NewRule("nomad.client.host.cpu.*.{nomad_cpu_core}.{metric}", "nomad.client.cpu.{nomad_metric}"))
+	rules = append(rules, NewRule("nomad.client.host.disk.*.{nomad_device}.{metric}", "nomad.client.disk.{nomad_metric}"))
+
+	rules = append(rules, NewRule("nomad.client.allocs.{nomad_job}.{nomad_task_group}.{nomad_allocation_id}.{nomad_task}.memory.{nomad_metric}", "nomad.client.allocation.memory.{nomad_metric}"))
+	rules = append(rules, NewRule("nomad.client.allocs.{nomad_job}.{nomad_task_group}.{nomad_allocation_id}.{nomad_task}.cpu.{nomad_metric}", "nomad.client.allocation.cpu.{nomad_metric}"))
 }
 
 func listenUDP(cfg AppConfig) {
