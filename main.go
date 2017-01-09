@@ -1,8 +1,8 @@
 package main
 
 import (
-	"log"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 
@@ -10,6 +10,7 @@ import (
 
 	datadog "github.com/DataDog/datadog-go/statsd"
 	statsd "github.com/cactus/go-statsd-client/statsd"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -34,21 +35,24 @@ type StatsDMetric struct {
 }
 
 var (
-	workerChannel = make(chan []byte)
-	quitChannel   = make(chan string)
-	rules         = make([]*CaputeRule, 0)
-	noTags        = make([]string, 0) // pre-computed empty tags for fallthrough metrics
+	logger         = logrus.New()
+	listenPortHTTP = getHTTPListenPort()
+	workerChannel  = make(chan []byte)
+	quitChannel    = make(chan string)
+	rules          = make([]*CaputeRule, 0)
+	noTags         = make([]string, 0) // pre-computed empty tags for fallthrough metrics
 )
 
 func main() {
 	dataDogClient, err := datadog.New("127.0.0.1:8125")
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 
-	cfg := AppConfig{"127.0.0.1", 1234}
+	cfg := AppConfig{"0.0.0.0", 8126}
 
 	// go listenTCP(cfg)
+	go startHTTPServer()
 	go listenUDP(cfg)
 
 	go emitter()
@@ -62,10 +66,10 @@ func main() {
 }
 
 func listenUDP(cfg AppConfig) {
-	log.Printf("Starting StatsD UDP listener on %s and port %d", cfg.Host, cfg.Port)
+	logger.Infof("Starting StatsD UDP listener on %s and port %d", cfg.Host, cfg.Port)
 	listener, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP(cfg.Host), Port: cfg.Port})
 	if err != nil {
-		log.Fatalf("Error setting up UDP listener: %s (exiting...)", err)
+		logger.Fatalf("Error setting up UDP listener: %s (exiting...)", err)
 	}
 	defer listener.Close()
 
@@ -73,7 +77,7 @@ func listenUDP(cfg AppConfig) {
 		buf := make([]byte, 512)
 		num, _, err := listener.ReadFromUDP(buf)
 		if err != nil {
-			log.Printf("Error reading from UDP buffer: %s (skipping...)", err)
+			logger.Infof("Error reading from UDP buffer: %s (skipping...)", err)
 			continue
 		}
 
@@ -82,10 +86,10 @@ func listenUDP(cfg AppConfig) {
 }
 
 // func listenTCP(cfg AppConfig) {
-// 	log.Printf("Starting StatsD TCP listener on %s and port %d", cfg.Host, cfg.Port)
+// 	logger.Infof("Starting StatsD TCP listener on %s and port %d", cfg.Host, cfg.Port)
 // 	listener, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP(cfg.Host), Port: cfg.Port})
 // 	if err != nil {
-// 		log.Fatalf("Error setting up TCP listener: %s (exiting...)", err)
+// 		logger.Fatalff("Error setting up TCP listener: %s (exiting...)", err)
 // 	}
 // 	defer listener.Close()
 
@@ -98,7 +102,7 @@ func listenUDP(cfg AppConfig) {
 // 		buf := make([]byte, 512)
 // 		num, _, err := listener.Re(buf)
 // 		if err != nil {
-// 			log.Printf("Error reading from UDP buffer: %s (skipping...)", err)
+// 			logger.Infof("Error reading from UDP buffer: %s (skipping...)", err)
 // 			continue
 // 		}
 
@@ -112,7 +116,7 @@ func init() {
 }
 
 func work(dataDogClient *datadog.Client, workerID int) {
-	log.Printf("[%d] Starting worker", workerID)
+	logger.Infof("[%d] Starting worker", workerID)
 
 	for {
 		select {
@@ -136,7 +140,8 @@ func work(dataDogClient *datadog.Client, workerID int) {
 						continue
 					}
 
-					log.Printf("[%d] Found match for '%s', emitting as '%s'", workerID, metric.name, rule.name)
+					ruleHitsSuccess.Add(1)
+					logger.Infof("[%d] Found match for '%s', emitting as '%s'", workerID, metric.name, rule.name)
 
 					switch metric.metricType {
 					case metricTypeCount:
@@ -150,7 +155,9 @@ func work(dataDogClient *datadog.Client, workerID int) {
 					break
 				}
 
-				log.Printf("[%d] No match found for '%s', relaying unmodified", workerID, metric.name)
+				ruleHitsMiss.Add(1)
+
+				logger.Infof("[%d] No match found for '%s', relaying unmodified", workerID, metric.name)
 
 				switch metric.metricType {
 				case metricTypeCount:
@@ -171,7 +178,7 @@ func work(dataDogClient *datadog.Client, workerID int) {
 func emitter() {
 	client, err := statsd.NewClient("127.0.0.1:1234", "")
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatalf(err.Error())
 	}
 	defer client.Close()
 
@@ -199,7 +206,7 @@ func parsePacketString(data string) *StatsDMetric {
 	ret := new(StatsDMetric)
 	first := strings.Split(data, ":")
 	if len(first) < 2 {
-		log.Printf("Malformatted metric: %s", data)
+		logger.Infof("Malformatted metric: %s", data)
 		return ret
 	}
 
@@ -225,8 +232,17 @@ func parsePacketString(data string) *StatsDMetric {
 		ret.value = value
 		ret.raw = data
 	default:
-		log.Printf("Unknown metrics type: %s", metricType)
+		logger.Infof("Unknown metrics type: %s", metricType)
 	}
 
 	return ret
+}
+
+func getHTTPListenPort() string {
+	port := os.Getenv("NOMAD_PORT_http")
+	if port == "" {
+		port = "4200"
+	}
+
+	return port
 }

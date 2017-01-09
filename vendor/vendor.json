@@ -13,7 +13,25 @@
 			"path": "github.com/cactus/go-statsd-client/statsd",
 			"revision": "d8eabe07bc70ff9ba6a56836cde99d1ea3d005f7",
 			"revisionTime": "2016-10-31T21:59:49Z"
+		},
+		{
+			"checksumSHA1": "wY06VX05N7o5g0wM7TMpo4Bkx4A=",
+			"path": "github.com/sirupsen/logrus",
+			"revision": "9b48ece7fc373043054858f8c0d362665e866004",
+			"revisionTime": "2017-01-06T22:16:01Z"
+		},
+		{
+			"checksumSHA1": "uTQtOqR0ePMMcvuvAIksiIZxhqU=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "d75a52659825e75fff6158388dddc6a5b04f9ba5",
+			"revisionTime": "2016-12-14T18:38:57Z"
+		},
+		{
+			"checksumSHA1": "12GqsW8PiRPnezDDy0v4brZrndM=",
+			"path": "gopkg.in/yaml.v2",
+			"revision": "a5b47d31c556af34a302ce5d659e6fea44d90de0",
+			"revisionTime": "2016-09-28T15:37:09Z"
 		}
 	],
-	"rootPath": "github.com/jippi/statsd-rewrite-proxy"
+	"rootPath": "github.com/bownty/statsd-rewrite-proxy"
 }

@@ -1,0 +1,7 @@
+---
+__shared__:
+    static:
+        scheduler: nomad
+development: []
+stage: []
+production: []
