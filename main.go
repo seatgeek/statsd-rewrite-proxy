@@ -242,7 +242,10 @@ func parsePacketString(data string) (*StatsDMetric, error) {
 		return ret, fmt.Errorf("Malformatted metric: %s", data)
 	}
 
-	value64, _ := strconv.ParseInt(second[0], 10, 0)
+	value64, err := strconv.ParseInt(second[0], 10, 0)
+	if err != nil {
+		return ret, fmt.Errorf("Could not parse value to int64: %+v", second[0])
+	}
 	value := float64(value64)
 
 	// check for a samplerate
