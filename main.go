@@ -85,9 +85,9 @@ func createRules() {
 	// nomad rewrites
 	rules = append(rules, NewRule("nomad.client.uptime.*", "nomad.client.uptime"))
 
-	rules = append(rules, NewRule("nomad.client.host.memmory.*.{nomad_metric}", "nomad.client.memmory.{nomad_metric}"))
-	rules = append(rules, NewRule("nomad.client.host.cpu.*.{nomad_cpu_core}.{metric}", "nomad.client.cpu.{nomad_metric}"))
-	rules = append(rules, NewRule("nomad.client.host.disk.*.{nomad_device}.{metric}", "nomad.client.disk.{nomad_metric}"))
+	rules = append(rules, NewRule("nomad.client.host.memory.{client_id}.{nomad_metric}", "nomad.client.memmory.{nomad_metric}"))
+	rules = append(rules, NewRule("nomad.client.host.cpu.{client_id}.{nomad_cpu_core}.{metric}", "nomad.client.cpu.{nomad_metric}"))
+	rules = append(rules, NewRule("nomad.client.host.disk.{client_id}.{nomad_device}.{metric}", "nomad.client.disk.{nomad_metric}"))
 
 	rules = append(rules, NewRule("nomad.client.allocs.{nomad_job}.{nomad_task_group}.{nomad_allocation_id}.{nomad_task}.memory.{nomad_metric}", "nomad.allocation.memory.{nomad_metric}"))
 	rules = append(rules, NewRule("nomad.client.allocs.{nomad_job}.{nomad_task_group}.{nomad_allocation_id}.{nomad_task}.cpu.{nomad_metric}", "nomad.allocation.cpu.{nomad_metric}"))
@@ -218,7 +218,7 @@ func emitter() {
 			client.Inc("fabio.admin_nginx.admin_bownty_net..62_210_94_249_23928", 1, 1)
 			client.Inc("fabio.--audits-nginx.audits_bownty_net./.62_210_248_90_50825.50-percentile", 43, 1.0)
 			client.Inc("fabio.http.status.200", 1, 1)
-			client.Inc("fabio.catch_all...bownty_com_80", 1, 1)
+			client.Inc("nomad.client.host.memory.c668a4ca-a835-de6a-4aa2-564d802c28e3.available", 1, 1)
 		}
 	}
 }
