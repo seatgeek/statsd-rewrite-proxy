@@ -71,6 +71,12 @@ func main() {
 	<-quitChannel
 }
 
+func createRules() {
+	rules = append(rules, NewRule("fabio.{service}.{host}.{upstream}", "fabio.service.requests"))
+	rules = append(rules, NewRule("fabio.{service}.{host}.{upstream}.{dimension}", "fabio.service.requests_with_dimension"))
+	rules = append(rules, NewRule("fabio.http.status.{code}", "fabio.http.status"))
+}
+
 func listenUDP(cfg AppConfig) {
 	logger.Infof("Starting StatsD UDP listener on %s and port %d", cfg.Host, cfg.Port)
 	listener, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP(cfg.Host), Port: cfg.Port})
@@ -89,11 +95,6 @@ func listenUDP(cfg AppConfig) {
 
 		workerChannel <- buf[0:num]
 	}
-}
-
-func createRules() {
-	rules = append(rules, NewRule("fabio.{service}.{host}.{upstream}", "fabio.service.requests"))
-	rules = append(rules, NewRule("fabio.http.status.{code}", "fabio.http.status"))
 }
 
 func work(dataDogClient *datadog.Client, workerID int) {
