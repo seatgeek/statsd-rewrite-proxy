@@ -57,7 +57,7 @@ func main() {
 	go startHTTPServer()
 	go listenUDP(cfg)
 
-	go emitter()
+	// go emitter()
 
 	// Start workers
 	for x := 0; x < workerCount; x++ {
