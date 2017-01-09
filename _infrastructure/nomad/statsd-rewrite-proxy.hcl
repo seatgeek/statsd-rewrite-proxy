@@ -3,11 +3,6 @@ job "{{PROJECT_NAME}}" {
   type        = "system"
   datacenters = ["production", "vagrant"]
 
-  constraint {
-    attribute = "${meta.kvm}"
-    value     = "1"
-  }
-
   task "server" {
     driver = "raw_exec"
     user   = "root"
