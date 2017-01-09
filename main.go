@@ -8,6 +8,8 @@ import (
 
 	"time"
 
+	"fmt"
+
 	datadog "github.com/DataDog/datadog-go/statsd"
 	statsd "github.com/cactus/go-statsd-client/statsd"
 	"github.com/sirupsen/logrus"
@@ -128,7 +130,11 @@ func work(dataDogClient *datadog.Client, workerID int) {
 			for _, str := range metrics {
 
 				// parse into a statsd metrict struct
-				metric := parsePacketString(str)
+				metric, err := parsePacketString(str)
+				if err != nil {
+					logger.Errorf("Invalid package '%s': %s", str, err)
+					continue
+				}
 
 				// loop our rewrite rules until we find a match
 				for _, rule := range rules {
@@ -202,12 +208,13 @@ func emitter() {
 }
 
 // parse a statsd line into a metric struct
-func parsePacketString(data string) *StatsDMetric {
+func parsePacketString(data string) (*StatsDMetric, error) {
 	ret := new(StatsDMetric)
+
 	first := strings.Split(data, ":")
 	if len(first) < 2 {
-		logger.Infof("Malformatted metric: %s", data)
-		return ret
+		logger.Errorf("Malformatted metric: %s", data)
+		return ret, fmt.Errorf("Malformatted metric: %s", data)
 	}
 
 	name := first[0]
@@ -232,10 +239,11 @@ func parsePacketString(data string) *StatsDMetric {
 		ret.value = value
 		ret.raw = data
 	default:
-		logger.Infof("Unknown metrics type: %s", metricType)
+		logger.Errorf("Unknown metrics type: %s", metricType)
+		return ret, fmt.Errorf("Unknown metrics type: %s", metricType)
 	}
 
-	return ret
+	return ret, nil
 }
 
 func getHTTPListenPort() string {
