@@ -80,7 +80,7 @@ func createRules() {
 	// fabio rewrites
 	rules = append(rules, NewRule("fabio.{service}.{host}.{path}.{upstream}.{dimension}", "fabio.service.requests.{dimension}"))
 	rules = append(rules, NewRule("fabio.{service}.{host}.{upstream}", "fabio.service.requests"))
-	rules = append(rules, NewRule("fabio.http.status.{code}", "fabio.http.status"))
+	rules = append(rules, NewRule("fabio.http.status.{code}", "fabio.http.response_code"))
 
 	// nomad rewrites
 	rules = append(rules, NewRule("nomad.client.uptime.*", "nomad.client.uptime"))
