@@ -56,7 +56,8 @@ func main() {
 
 	cfg := AppConfig{"0.0.0.0", 8126}
 
-	// go listenTCP(cfg)
+	createRules()
+
 	go startHTTPServer()
 	go listenUDP(cfg)
 
@@ -90,32 +91,7 @@ func listenUDP(cfg AppConfig) {
 	}
 }
 
-// func listenTCP(cfg AppConfig) {
-// 	logger.Infof("Starting StatsD TCP listener on %s and port %d", cfg.Host, cfg.Port)
-// 	listener, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP(cfg.Host), Port: cfg.Port})
-// 	if err != nil {
-// 		logger.Fatalff("Error setting up TCP listener: %s (exiting...)", err)
-// 	}
-// 	defer listener.Close()
-
-// 	conn, err := listener.AcceptTCP()
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	for {
-// 		buf := make([]byte, 512)
-// 		num, _, err := listener.Re(buf)
-// 		if err != nil {
-// 			logger.Infof("Error reading from UDP buffer: %s (skipping...)", err)
-// 			continue
-// 		}
-
-// 		workerChannel <- buf[0:num]
-// 	}
-// }
-
-func init() {
+func createRules() {
 	rules = append(rules, NewRule("fabio.{service}.{host}.{upstream}", "fabio.service.requests"))
 	rules = append(rules, NewRule("fabio.http.status.{code}", "fabio.http.status"))
 }
@@ -184,7 +160,7 @@ func work(dataDogClient *datadog.Client, workerID int) {
 
 // dummy emitter to test functionality while testing
 func emitter() {
-	client, err := statsd.NewClient("127.0.0.1:1234", "")
+	client, err := statsd.NewClient("127.0.0.1:8126", "")
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}

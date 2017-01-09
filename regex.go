@@ -19,7 +19,9 @@ type RuleResult struct {
 
 // NewRule ...
 func NewRule(ruleString string, newPath string) *CaputeRule {
-	rule := &CaputeRule{buildRegexp(ruleString), ruleString}
+	rule := &CaputeRule{}
+	rule.Regexp = buildRegexp(ruleString)
+	rule.name = newPath
 	return rule
 }
 
