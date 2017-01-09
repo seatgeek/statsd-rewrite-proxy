@@ -89,8 +89,8 @@ func createRules() {
 	rules = append(rules, NewRule("nomad.client.host.cpu.*.{nomad_cpu_core}.{metric}", "nomad.client.cpu.{nomad_metric}"))
 	rules = append(rules, NewRule("nomad.client.host.disk.*.{nomad_device}.{metric}", "nomad.client.disk.{nomad_metric}"))
 
-	rules = append(rules, NewRule("nomad.client.allocs.{nomad_job}.{nomad_task_group}.{nomad_allocation_id}.{nomad_task}.memory.{nomad_metric}", "nomad.client.allocation.memory.{nomad_metric}"))
-	rules = append(rules, NewRule("nomad.client.allocs.{nomad_job}.{nomad_task_group}.{nomad_allocation_id}.{nomad_task}.cpu.{nomad_metric}", "nomad.client.allocation.cpu.{nomad_metric}"))
+	rules = append(rules, NewRule("nomad.client.allocs.{nomad_job}.{nomad_task_group}.{nomad_allocation_id}.{nomad_task}.memory.{nomad_metric}", "nomad.allocation.memory.{nomad_metric}"))
+	rules = append(rules, NewRule("nomad.client.allocs.{nomad_job}.{nomad_task_group}.{nomad_allocation_id}.{nomad_task}.cpu.{nomad_metric}", "nomad.allocation.cpu.{nomad_metric}"))
 }
 
 func listenUDP(cfg AppConfig) {
