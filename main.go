@@ -51,6 +51,9 @@ func main() {
 		logger.Fatal(err)
 	}
 
+	// parsePacketString("fabio.--frontend-node-renderer.frontend-node-renderer_service_bownty./.62_210_91_111_57029.std-dev:0")
+	// return
+
 	cfg := AppConfig{"0.0.0.0", 8126}
 
 	// go listenTCP(cfg)
@@ -219,7 +222,12 @@ func parsePacketString(data string) (*StatsDMetric, error) {
 	}
 
 	name := first[0]
+
 	second := strings.Split(first[1], "|")
+	if len(second) < 2 {
+		return ret, fmt.Errorf("Malformatted metric: %s", data)
+	}
+
 	value64, _ := strconv.ParseInt(second[0], 10, 0)
 	value := float64(value64)
 
