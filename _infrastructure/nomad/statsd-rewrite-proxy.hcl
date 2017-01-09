@@ -2,7 +2,7 @@ job "{{PROJECT_NAME}}" {
   region      = "global"
   type        = "system"
   datacenters = ["production", "vagrant"]
-3
+
   constraint {
     attribute = "${meta.kvm}"
     value     = "1"
