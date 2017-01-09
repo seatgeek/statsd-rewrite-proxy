@@ -66,7 +66,7 @@ func main() {
 	go startHTTPServer()
 	go listenUDP(cfg)
 
-	go emitter()
+	// go emitter()
 
 	// Start workers
 	for x := 0; x < workerCount; x++ {
@@ -77,7 +77,7 @@ func main() {
 }
 
 func createRules() {
-	rules = append(rules, NewRule("fabio.{service}.{host}.{upstream}.{dimension}", "fabio.service.requests.{dimension}"))
+	rules = append(rules, NewRule("fabio.{service}.{host}.{path}.{upstream}.{dimension}", "fabio.service.requests.{dimension}"))
 	rules = append(rules, NewRule("fabio.{service}.{host}.{upstream}", "fabio.service.requests"))
 	rules = append(rules, NewRule("fabio.http.status.{code}", "fabio.http.status"))
 }
@@ -255,6 +255,9 @@ func parsePacketString(data string) (*StatsDMetric, error) {
 		logger.Errorf("Unknown metrics type: %s", metricType)
 		return ret, fmt.Errorf("Unknown metrics type: %s", metricType)
 	}
+
+	// remove stupid double dashes from metrics
+	ret.name = strings.Replace(ret.name, "--", "", -1)
 
 	return ret, nil
 }
