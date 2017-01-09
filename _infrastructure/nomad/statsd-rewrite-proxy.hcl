@@ -38,7 +38,10 @@ job "{{PROJECT_NAME}}" {
 
       network {
         mbits = 1
-        port  "http"{}
+        port  "http" {}
+        port "statsd" {
+          static = 8126
+        }
       }
     }
   }
