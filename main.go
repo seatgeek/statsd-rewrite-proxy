@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"net"
 	"os"
 	"strconv"
@@ -20,6 +21,10 @@ const (
 	metricTypeCount  = "count"
 	metricTypeGauge  = "gauge"
 	metricTypeTiming = "timing"
+
+	// ip packet size is stored in two bytes and that is how big in theory the packet can be.
+	// In practice it is highly unlikely but still possible to get packets bigger than usual MTU of 1500.
+	packetSizeUDP = 0xffff
 )
 
 // AppConfig ...
@@ -61,7 +66,7 @@ func main() {
 	go startHTTPServer()
 	go listenUDP(cfg)
 
-	// go emitter()
+	go emitter()
 
 	// Start workers
 	for x := 0; x < workerCount; x++ {
@@ -72,8 +77,8 @@ func main() {
 }
 
 func createRules() {
+	rules = append(rules, NewRule("fabio.{service}.{host}.{upstream}.{dimension}", "fabio.service.requests.{dimension}"))
 	rules = append(rules, NewRule("fabio.{service}.{host}.{upstream}", "fabio.service.requests"))
-	rules = append(rules, NewRule("fabio.{service}.{host}.{upstream}.{dimension}", "fabio.service.requests_with_dimension"))
 	rules = append(rules, NewRule("fabio.http.status.{code}", "fabio.http.status"))
 }
 
@@ -86,14 +91,15 @@ func listenUDP(cfg AppConfig) {
 	defer listener.Close()
 
 	for {
-		buf := make([]byte, 512)
+		buf := make([]byte, packetSizeUDP)
 		num, _, err := listener.ReadFromUDP(buf)
+
 		if err != nil {
 			logger.Infof("Error reading from UDP buffer: %s (skipping...)", err)
 			continue
 		}
 
-		workerChannel <- buf[0:num]
+		workerChannel <- buf[:num]
 	}
 }
 
@@ -103,17 +109,34 @@ func work(dataDogClient *datadog.Client, workerID int) {
 	for {
 		select {
 		case data := <-workerChannel:
-			// the buffer can contain multiple lines
-			metrics := strings.Split(string(data), "\n")
-
 			// loop the metric lines
-			for _, str := range metrics {
+			for {
+				idx := bytes.IndexByte(data, '\n')
+				var line []byte
+
+				// protocol does not require line to end in \n
+				if idx == -1 { // \n not found
+					if len(data) == 0 {
+						break
+					}
+
+					line = data
+					data = nil
+				} else { // usual case
+					line = data[:idx]
+					data = data[idx+1:]
+				}
+
+				str := string(line)
+
 				// parse into a statsd metrict struct
 				metric, err := parsePacketString(str)
 				if err != nil {
 					logger.Errorf("Invalid package '%s': %s", str, err)
 					continue
 				}
+
+				found := false
 
 				// loop our rewrite rules until we find a match
 				for _, rule := range rules {
@@ -126,18 +149,23 @@ func work(dataDogClient *datadog.Client, workerID int) {
 					}
 
 					ruleHitsSuccess.Add(1)
-					logger.Infof("[%d] Found match for '%s', emitting as '%s'", workerID, metric.name, rule.name)
+					logger.Infof("[%d] Found match for '%s', emitting as '%s'", workerID, metric.name, result.name)
 
 					switch metric.metricType {
 					case metricTypeCount:
-						dataDogClient.Count(rule.name, int64(metric.value), result.Tags, 1)
+						dataDogClient.Count(result.name, int64(metric.value), result.Tags, 1)
 					case metricTypeTiming:
-						dataDogClient.Timing(rule.name, time.Duration(metric.value), result.Tags, 1)
+						dataDogClient.Timing(result.name, time.Duration(metric.value), result.Tags, 1)
 					case metricTypeGauge:
-						dataDogClient.Gauge(rule.name, metric.value, result.Tags, 1)
+						dataDogClient.Gauge(result.name, metric.value, result.Tags, 1)
 					}
 
+					found = true
 					break
+				}
+
+				if found {
+					continue
 				}
 
 				ruleHitsMiss.Add(1)
@@ -176,12 +204,10 @@ func emitter() {
 			return
 		case <-ticker.C:
 			// Send a stat
-			client.Inc("stat1", 42, 1.0)
 			client.Inc("fabio.admin_nginx.admin_bownty_net..62_210_94_249_23928", 1, 1)
+			client.Inc("fabio.--audits-nginx.audits_bownty_net./.62_210_248_90_50825.50-percentile", 43, 1.0)
 			client.Inc("fabio.http.status.200", 1, 1)
 			client.Inc("fabio.catch_all...bownty_com_80", 1, 1)
-			client.Gauge("demo.derp.gauge", 43, 1.0)
-			client.TimingDuration("derp.timing", 5*time.Second, 1.0)
 		}
 	}
 }

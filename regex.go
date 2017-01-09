@@ -15,6 +15,7 @@ type CaputeRule struct {
 type RuleResult struct {
 	Captures map[string]string
 	Tags     []string
+	name     string
 }
 
 // NewRule ...
@@ -51,6 +52,7 @@ func buildRegexp(rule string) *regexp.Regexp {
 func (r *CaputeRule) FindStringSubmatchMap(s string) *RuleResult {
 	result := RuleResult{}
 	result.Captures = make(map[string]string, 0)
+	result.name = r.name
 
 	match := r.FindStringSubmatch(s)
 	if match == nil {
@@ -63,9 +65,12 @@ func (r *CaputeRule) FindStringSubmatchMap(s string) *RuleResult {
 			continue
 		}
 
+		// logger.Infof("name: %s", result.name)
 		result.Captures[name] = match[i]
 		result.Tags = append(result.Tags, fmt.Sprintf("%s:%s", name, match[i]))
+		result.name = strings.Replace(result.name, "{"+name+"}", match[i], -1)
 	}
+	// logger.Infof("name: %s", result.name)
 
 	return &result
 }
