@@ -128,6 +128,7 @@ func work(dataDogClient *datadog.Client, workerID int) {
 
 			// loop the metric lines
 			for _, str := range metrics {
+				logger.Infof("Handling metric: %s", str)
 
 				// parse into a statsd metrict struct
 				metric, err := parsePacketString(str)
