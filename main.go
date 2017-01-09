@@ -227,18 +227,19 @@ func parsePacketString(data string) (*StatsDMetric, error) {
 	third := strings.Split(second[1], "@")
 	metricType := third[0]
 
+	ret.name = name
+	ret.value = value
+	ret.raw = data
+
 	switch metricType {
 	case "c":
 		ret.metricType = metricTypeCount
-		fallthrough
 	case "ms":
 		ret.metricType = metricTypeTiming
-		fallthrough
+	case "gf":
+		ret.metricType = metricTypeGauge
 	case "g":
 		ret.metricType = metricTypeGauge
-		ret.name = name
-		ret.value = value
-		ret.raw = data
 	default:
 		logger.Errorf("Unknown metrics type: %s", metricType)
 		return ret, fmt.Errorf("Unknown metrics type: %s", metricType)
