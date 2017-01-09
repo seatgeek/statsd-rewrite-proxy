@@ -8,16 +8,13 @@ import "fmt"
 // CaputeRule embed regexp.Regexp in a new type so we can extend it
 type CaputeRule struct {
 	*regexp.Regexp
-	NewPath string
+	name string
 }
-
-type regexRules []CaputeRule
 
 // RuleResult ...
 type RuleResult struct {
 	Captures map[string]string
 	Tags     []string
-	NewPath  string
 }
 
 // NewRule ...
@@ -67,8 +64,6 @@ func (r *CaputeRule) FindStringSubmatchMap(s string) *RuleResult {
 		result.Captures[name] = match[i]
 		result.Tags = append(result.Tags, fmt.Sprintf("%s:%s", name, match[i]))
 	}
-
-	result.NewPath = r.ReplaceAllLiteralString(s, "")
 
 	return &result
 }

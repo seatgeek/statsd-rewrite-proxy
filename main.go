@@ -13,13 +13,14 @@ import (
 )
 
 const (
-	workerCount  = 8
-	metricCount  = "count"
-	metricGauge  = "gauge"
-	metricTiming = "timing"
+	workerCount      = 8
+	metricTypeCount  = "count"
+	metricTypeGauge  = "gauge"
+	metricTypeTiming = "timing"
 )
 
-type config struct {
+// AppConfig ...
+type AppConfig struct {
 	Host string
 	Port int
 }
@@ -32,48 +33,87 @@ type StatsDMetric struct {
 	raw        string
 }
 
-var workerChannel = make(chan []byte)
-var quitChannel = make(chan string)
-var rules = make([]*CaputeRule, 0)
-var noTags = make([]string, 0)
+var (
+	workerChannel = make(chan []byte)
+	quitChannel   = make(chan string)
+	rules         = make([]*CaputeRule, 0)
+	noTags        = make([]string, 0) // pre-computed empty tags for fallthrough metrics
+)
 
 func main() {
-	client, err := datadog.New("127.0.0.1:8125")
+	dataDogClient, err := datadog.New("127.0.0.1:8125")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cfg := config{"127.0.0.1", 1234}
+	cfg := AppConfig{"127.0.0.1", 1234}
 
-	log.Printf("Starting StatsD listener on %s and port %d", cfg.Host, cfg.Port)
+	// go listenTCP(cfg)
+	go listenUDP(cfg)
+
+	go emitter()
+
+	// Start workers
+	for x := 0; x < workerCount; x++ {
+		go work(dataDogClient, x)
+	}
+
+	<-quitChannel
+}
+
+func listenUDP(cfg AppConfig) {
+	log.Printf("Starting StatsD UDP listener on %s and port %d", cfg.Host, cfg.Port)
 	listener, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP(cfg.Host), Port: cfg.Port})
 	if err != nil {
-		log.Printf("Error setting up listener: %s (exiting...)", err)
+		log.Fatalf("Error setting up UDP listener: %s (exiting...)", err)
 	}
-
-	// go emitter()
-
-	for x := 0; x < workerCount; x++ {
-		go work(client)
-	}
+	defer listener.Close()
 
 	for {
 		buf := make([]byte, 512)
 		num, _, err := listener.ReadFromUDP(buf)
 		if err != nil {
 			log.Printf("Error reading from UDP buffer: %s (skipping...)", err)
-		} else {
-			workerChannel <- buf[0:num]
+			continue
 		}
+
+		workerChannel <- buf[0:num]
 	}
 }
+
+// func listenTCP(cfg AppConfig) {
+// 	log.Printf("Starting StatsD TCP listener on %s and port %d", cfg.Host, cfg.Port)
+// 	listener, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP(cfg.Host), Port: cfg.Port})
+// 	if err != nil {
+// 		log.Fatalf("Error setting up TCP listener: %s (exiting...)", err)
+// 	}
+// 	defer listener.Close()
+
+// 	conn, err := listener.AcceptTCP()
+// 	if err != nil {
+// 		panic(err)
+// 	}
+
+// 	for {
+// 		buf := make([]byte, 512)
+// 		num, _, err := listener.Re(buf)
+// 		if err != nil {
+// 			log.Printf("Error reading from UDP buffer: %s (skipping...)", err)
+// 			continue
+// 		}
+
+// 		workerChannel <- buf[0:num]
+// 	}
+// }
 
 func init() {
 	rules = append(rules, NewRule("fabio.{service}.{host}.{upstream}", "fabio.service.requests"))
 	rules = append(rules, NewRule("fabio.http.status.{code}", "fabio.http.status"))
 }
 
-func work(datadogClient *datadog.Client) {
+func work(dataDogClient *datadog.Client, workerID int) {
+	log.Printf("[%d] Starting worker", workerID)
+
 	for {
 		select {
 		case data := <-workerChannel:
@@ -82,7 +122,6 @@ func work(datadogClient *datadog.Client) {
 
 			// loop the metric lines
 			for _, str := range metrics {
-				var found *RuleResult
 
 				// parse into a statsd metrict struct
 				metric := parsePacketString(str)
@@ -97,34 +136,29 @@ func work(datadogClient *datadog.Client) {
 						continue
 					}
 
-					found = result
+					log.Printf("[%d] Found match for '%s', emitting as '%s'", workerID, metric.name, rule.name)
+
+					switch metric.metricType {
+					case metricTypeCount:
+						dataDogClient.Count(rule.name, int64(metric.value), result.Tags, 1)
+					case metricTypeTiming:
+						dataDogClient.Timing(rule.name, time.Duration(metric.value), result.Tags, 1)
+					case metricTypeGauge:
+						dataDogClient.Gauge(rule.name, metric.value, result.Tags, 1)
+					}
+
 					break
 				}
 
-				if found != nil {
-					log.Printf("Found match for %s!", metric.name)
-					log.Printf("%+v", found)
-
-					switch metric.metricType {
-					case metricCount:
-						datadogClient.Count(found.NewPath, int64(metric.value), found.Tags, 1)
-					case metricTiming:
-						datadogClient.Timing(found.NewPath, time.Duration(metric.value), found.Tags, 1)
-					case metricGauge:
-						datadogClient.Gauge(found.NewPath, metric.value, found.Tags, 1)
-					}
-					continue
-				}
-
-				log.Printf("No match found for '%s', relaying unmodified", metric.name)
+				log.Printf("[%d] No match found for '%s', relaying unmodified", workerID, metric.name)
 
 				switch metric.metricType {
-				case metricCount:
-					datadogClient.Count(metric.name, int64(metric.value), noTags, 1)
-				case metricTiming:
-					datadogClient.Timing(metric.name, time.Duration(metric.value), noTags, 1)
-				case metricGauge:
-					datadogClient.Gauge(metric.name, metric.value, noTags, 1)
+				case metricTypeCount:
+					dataDogClient.Count(metric.name, int64(metric.value), noTags, 1)
+				case metricTypeTiming:
+					dataDogClient.Timing(metric.name, time.Duration(metric.value), noTags, 1)
+				case metricTypeGauge:
+					dataDogClient.Gauge(metric.name, metric.value, noTags, 1)
 				}
 			}
 		case <-quitChannel:
@@ -180,13 +214,13 @@ func parsePacketString(data string) *StatsDMetric {
 
 	switch metricType {
 	case "c":
-		ret.metricType = metricCount
+		ret.metricType = metricTypeCount
 		fallthrough
 	case "ms":
-		ret.metricType = metricTiming
+		ret.metricType = metricTypeTiming
 		fallthrough
 	case "g":
-		ret.metricType = metricGauge
+		ret.metricType = metricTypeGauge
 		ret.name = name
 		ret.value = value
 		ret.raw = data
