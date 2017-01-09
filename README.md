@@ -14,6 +14,8 @@ The agent will listen on UDP port `8126` for statsd, and TCP port `4000` for exp
 
 ## Fabio
 
+### Example
+
 `fabio.{fabio_service}.{fabio_host}.{fabio_path}.{fabio_upstream}.{fabio_dimension}`
 
 can be rewritten into
@@ -23,6 +25,8 @@ can be rewritten into
 with
 
 `fabio_service,fabio_host,fabio_path,fabio_upstream,fabio_dimension` being converted into named tags (e.g. `fabio_host:example.com`)
+
+### Config
 
 The following Fabio env configuration is assumed, the `FABIO_METRICS_PREFIX` is especially important.
 
@@ -34,6 +38,8 @@ FABIO_METRICS_PREFIX      = "fabio."
 
 ## Nomad
 
+### Example
+
 `nomad.client.allocs.{nomad_job}.{nomad_task_group}.{nomad_allocation_id}.{nomad_task}.memory.{nomad_metric}`
 
 can be rewritten into
@@ -43,6 +49,8 @@ can be rewritten into
 with
 
 `nomad_job,nomad_task_group,nomad_allocation_id,nomad_task,nomad_metric` being converted into named tags (e.g. `nomad_job:example-job`)
+
+### Config
 
 The following Nomad client telemetry configuration is assumed.
 
