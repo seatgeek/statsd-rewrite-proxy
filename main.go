@@ -86,8 +86,8 @@ func createRules() {
 	rules = append(rules, NewRule("nomad.client.uptime.*", "nomad.client.uptime"))
 
 	rules = append(rules, NewRule("nomad.client.host.memory.{client_id}.{nomad_metric}", "nomad.client.memmory.{nomad_metric}"))
-	rules = append(rules, NewRule("nomad.client.host.cpu.{client_id}.{nomad_cpu_core}.{metric}", "nomad.client.cpu.{nomad_metric}"))
-	rules = append(rules, NewRule("nomad.client.host.disk.{client_id}.{nomad_device}.{metric}", "nomad.client.disk.{nomad_metric}"))
+	rules = append(rules, NewRule("nomad.client.host.cpu.{client_id}.{nomad_cpu_core}.{nomad_metric}", "nomad.client.cpu.{nomad_metric}"))
+	rules = append(rules, NewRule("nomad.client.host.disk.{client_id}.{nomad_device}.{nomad_metric}", "nomad.client.disk.{nomad_metric}"))
 
 	rules = append(rules, NewRule("nomad.client.allocs.{nomad_job}.{nomad_task_group}.{nomad_allocation_id}.{nomad_task}.memory.{nomad_metric}", "nomad.allocation.memory.{nomad_metric}"))
 	rules = append(rules, NewRule("nomad.client.allocs.{nomad_job}.{nomad_task_group}.{nomad_allocation_id}.{nomad_task}.cpu.{nomad_metric}", "nomad.allocation.cpu.{nomad_metric}"))
