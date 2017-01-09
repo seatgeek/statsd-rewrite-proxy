@@ -119,6 +119,8 @@ func work(dataDogClient *datadog.Client, workerID int) {
 
 	for {
 		select {
+		case <-quitChannel:
+			return
 		case data := <-workerChannel:
 			// loop the metric lines
 			for {
@@ -160,7 +162,7 @@ func work(dataDogClient *datadog.Client, workerID int) {
 					}
 
 					ruleHitsSuccess.Add(1)
-					logger.Debugf("[%d] Found match for '%s', emitting as '%s'", workerID, metric.name, result.name)
+					logger.Debugf("[%d] Found match for '%s', emitting as '%s' (value: %+v)", workerID, metric.name, result.name, metric.value)
 
 					switch metric.metricType {
 					case metricTypeCount:
@@ -181,7 +183,7 @@ func work(dataDogClient *datadog.Client, workerID int) {
 
 				ruleHitsMiss.Add(1)
 
-				logger.Warnf("[%d] No match found for '%s', relaying unmodified", workerID, metric.name)
+				logger.Warnf("[%d] No match found for '%s', relaying unmodified (value: %+v)", workerID, metric.name, metric.value)
 
 				switch metric.metricType {
 				case metricTypeCount:
@@ -192,8 +194,6 @@ func work(dataDogClient *datadog.Client, workerID int) {
 					dataDogClient.Gauge(metric.name, metric.value, noTags, 1)
 				}
 			}
-		case <-quitChannel:
-			return
 		}
 	}
 }
