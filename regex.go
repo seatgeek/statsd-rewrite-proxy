@@ -44,6 +44,7 @@ func buildRegexp(rule string) *regexp.Regexp {
 	}
 
 	reg := strings.Join(regRule, `\.+`)
+	logger.Infof(reg)
 	return regexp.MustCompile(reg)
 }
 
