@@ -209,7 +209,7 @@ func emitter() {
 
 // parse a statsd line into a metric struct
 func parsePacketString(data string) (*StatsDMetric, error) {
-	logger.Infof("Parse metric: %s", data)
+	logger.Debugf("Parse metric: %s", data)
 
 	ret := new(StatsDMetric)
 
