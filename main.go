@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -17,7 +18,6 @@ import (
 )
 
 const (
-	workerCount      = 8
 	metricTypeCount  = "count"
 	metricTypeGauge  = "gauge"
 	metricTypeTiming = "timing"
@@ -69,6 +69,7 @@ func main() {
 	// go emitter()
 
 	// Start workers
+	workerCount := runtime.NumCPU()
 	for x := 0; x < workerCount; x++ {
 		go work(dataDogClient, x)
 	}
@@ -208,7 +209,7 @@ func emitter() {
 
 // parse a statsd line into a metric struct
 func parsePacketString(data string) (*StatsDMetric, error) {
-	logger.Debugf("Parse metric: %s", data)
+	logger.Infof("Parse metric: %s", data)
 
 	ret := new(StatsDMetric)
 
