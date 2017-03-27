@@ -6,6 +6,33 @@ func createRules() {
 	 * Nomad Key Metrics
 	 *********************************************************************************************************************************************************/
 
+	// nomad.runtime.num_goroutines
+	rules = append(rules, NewRule("nomad.runtime.num_goroutines", "nomad.runtime.num_goroutines"))
+
+	// nomad.runtime.alloc_bytes
+	rules = append(rules, NewRule("nomad.runtime.alloc_bytes", "nomad.runtime.alloc_bytes"))
+
+	// nomad.runtime.sys_bytes
+	rules = append(rules, NewRule("nomad.runtime.sys_bytes", "nomad.runtime.sys_bytes"))
+
+	// nomad.runtime.malloc_count
+	rules = append(rules, NewRule("nomad.runtime.malloc_count", "nomad.runtime.malloc_count"))
+
+	// nomad.runtime.free_count
+	rules = append(rules, NewRule("nomad.runtime.free_count", "nomad.runtime.free_count"))
+
+	// nomad.runtime.heap_objects
+	rules = append(rules, NewRule("nomad.runtime.heap_objects", "nomad.runtime.heap_objects"))
+
+	// nomad.runtime.total_gc_pause_ns
+	rules = append(rules, NewRule("nomad.runtime.total_gc_pause_ns", "nomad.runtime.total_gc_pause_ns"))
+
+	// nomad.runtime.total_gc_runs
+	rules = append(rules, NewRule("nomad.runtime.total_gc_runs", "nomad.runtime.total_gc_runs"))
+
+	// nomad.uptime
+	rules = append(rules, NewRule("nomad.uptime", "nomad.uptime"))
+
 	// nomad.client.uptime.<HostID>
 	rules = append(rules, NewRule("nomad.client.uptime.{nomad_client}", "nomad.client.uptime"))
 
@@ -68,6 +95,21 @@ func createRules() {
 	/*********************************************************************************************************************************************************
 	 * Nomad Allocation Metrics
 	 *********************************************************************************************************************************************************/
+
+	// nomad.client.allocations.migrating.<HostID>
+	rules = append(rules, NewRule("nomad.client.allocations.migrating.{nomad_client}", "nomad.client.allocations.migrating"))
+
+	// nomad.client.allocations.blocked.<HostID>
+	rules = append(rules, NewRule("nomad.client.allocations.blocked.{nomad_client}", "nomad.client.allocations.blocked"))
+
+	// nomad.client.allocations.pending.<HostID>
+	rules = append(rules, NewRule("nomad.client.allocations.pending.{nomad_client}", "nomad.client.allocations.pending"))
+
+	// nomad.client.allocations.running.<HostID>
+	rules = append(rules, NewRule("nomad.client.allocations.running.{nomad_client}", "nomad.client.allocations.running"))
+
+	// nomad.client.allocations.terminal.<HostID>
+	rules = append(rules, NewRule("nomad.client.allocations.terminal.{nomad_client}", "nomad.client.allocations.terminal"))
 
 	// nomad.client.allocs.<Job>.<TaskGroup>.<AllocID>.<Task>.memory.rss
 	// nomad.client.allocs.<Job>.<TaskGroup>.<AllocID>.<Task>.memory.cache
