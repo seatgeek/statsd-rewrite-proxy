@@ -3,6 +3,20 @@ package main
 func createRules() {
 
 	/*********************************************************************************************************************************************************
+	 * Fabio Metrics
+	 *********************************************************************************************************************************************************/
+
+	// fabio.<service>.<host>.<path>.<target_host>.(count|min|max)
+	rules = append(rules, NewRule("fabio.{fabio_service}.{fabio_host}.{fabio_path}.{fabio_target_host}.count", "fabio.requests.count"))
+	rules = append(rules, NewRule("fabio.{fabio_service}.{fabio_host}.{fabio_path}.{fabio_target_host}.min", "fabio.requests.min"))
+	rules = append(rules, NewRule("fabio.{fabio_service}.{fabio_host}.{fabio_path}.{fabio_target_host}.max", "fabio.requests.max"))
+
+	// fabio.http.status.200.(count|min|max)
+	rules = append(rules, NewRule("fabio.http.status.{fabio_response_code}.count", "fabio.response_code.count"))
+	rules = append(rules, NewRule("fabio.http.status.{fabio_response_code}.min", "fabio.response_code.min"))
+	rules = append(rules, NewRule("fabio.http.status.{fabio_response_code}.max", "fabio.response_code.max"))
+
+	/*********************************************************************************************************************************************************
 	 * Nomad Key Metrics
 	 *********************************************************************************************************************************************************/
 
