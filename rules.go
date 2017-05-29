@@ -1,5 +1,107 @@
 package main
 
+import (
+	"fmt"
+	"regexp"
+	"strings"
+)
+
+const (
+	ruleActionMatch = "match"
+	ruleActionDrop  = "drop"
+	ruleActionRelay = "relay"
+	ruleActionMiss  = "miss"
+)
+
+// Rule ...
+type Rule struct {
+	*regexp.Regexp
+	name   string
+	action string
+}
+
+// RuleResult ...
+type RuleResult struct {
+	Captures map[string]string
+	Tags     []string
+	name     string
+	action   string
+}
+
+// Rules ...
+type Rules struct {
+	list []*Rule
+}
+
+func (r *Rules) Match(ruleString, newPath string) {
+	r.list = append(r.list, NewMatchRule(ruleString, newPath))
+}
+
+func (r *Rules) Relay(ruleString string) {
+	r.list = append(r.list, NewRelayRule(ruleString))
+}
+
+func (r *Rules) Drop(ruleString string) {
+	r.list = append(r.list, NewDropRule(ruleString))
+}
+
+// NewMatchRule ...
+func NewMatchRule(ruleString string, newPath string) *Rule {
+	return &Rule{
+		action: ruleActionMatch,
+		Regexp: buildRegexp(ruleString),
+		name:   newPath,
+	}
+}
+
+// NewDropRule ..
+func NewDropRule(ruleString string) *Rule {
+	return &Rule{
+		action: ruleActionDrop,
+		Regexp: buildRegexp(ruleString),
+	}
+}
+
+// NewRelayRule ...
+func NewRelayRule(rulestring string) *Rule {
+	return &Rule{
+		action: ruleActionRelay,
+		Regexp: buildRegexp(rulestring),
+	}
+}
+
+// FindStringSubmatchMap add a new method to our new regular expression type
+func (r *Rule) FindStringSubmatchMap(s string) *RuleResult {
+	result := &RuleResult{
+		action: r.action,
+	}
+
+	match := r.FindStringSubmatch(s)
+	if match == nil {
+		result.action = ruleActionMiss
+		return result
+	}
+
+	if r.action == ruleActionDrop || r.action == ruleActionRelay {
+		return result
+	}
+
+	result.Captures = make(map[string]string, 0)
+	result.name = r.name
+
+	for i, name := range r.SubexpNames() {
+		if i == 0 {
+			continue
+		}
+
+		result.Captures[name] = match[i]
+		result.Tags = append(result.Tags, fmt.Sprintf("%s:%s", name, match[i]))
+		result.name = strings.Replace(result.name, "{"+name+"}", match[i], -1)
+	}
+
+	return result
+}
+
 func createRules() {
 
 	/*********************************************************************************************************************************************************
@@ -19,38 +121,39 @@ func createRules() {
 	rules.Match("fabio.http.status.{fabio_response_code}.95_percentile", "fabio.http.response_code.95_percentile")
 	rules.Match("fabio.http.status.{fabio_response_code}.99_percentile", "fabio.http.response_code.99_percentile")
 	rules.Match("fabio.http.status.{fabio_response_code}.999_percentile", "fabio.http.response_code.999_percentile")
-	rules.Ignore("fabio.*")
+
+	rules.Drop("fabio.*")
 
 	/*********************************************************************************************************************************************************
 	 * Nomad Key Metrics
 	 *********************************************************************************************************************************************************/
 
 	// nomad.runtime.num_goroutines
-	rules.Pass("nomad.runtime.num_goroutines")
+	rules.Relay("nomad.runtime.num_goroutines")
 
 	// nomad.runtime.alloc_bytes
-	rules.Pass("nomad.runtime.alloc_bytes")
+	rules.Relay("nomad.runtime.alloc_bytes")
 
 	// nomad.runtime.sys_bytes
-	rules.Pass("nomad.runtime.sys_bytes")
+	rules.Relay("nomad.runtime.sys_bytes")
 
 	// nomad.runtime.malloc_count
-	rules.Pass("nomad.runtime.malloc_count")
+	rules.Relay("nomad.runtime.malloc_count")
 
 	// nomad.runtime.free_count
-	rules.Pass("nomad.runtime.free_count")
+	rules.Relay("nomad.runtime.free_count")
 
 	// nomad.runtime.heap_objects
-	rules.Pass("nomad.runtime.heap_objects")
+	rules.Relay("nomad.runtime.heap_objects")
 
 	// nomad.runtime.total_gc_pause_ns
-	rules.Pass("nomad.runtime.total_gc_pause_ns")
+	rules.Relay("nomad.runtime.total_gc_pause_ns")
 
 	// nomad.runtime.total_gc_runs
-	rules.Pass("nomad.runtime.total_gc_runs")
+	rules.Relay("nomad.runtime.total_gc_runs")
 
 	// nomad.uptime
-	rules.Pass("nomad.uptime")
+	rules.Relay("nomad.uptime")
 
 	// nomad.client.uptime.<HostID>
 	rules.Match("nomad.client.uptime.{nomad_client}", "nomad.client.uptime")
@@ -144,4 +247,6 @@ func createRules() {
 	// nomad.client.allocs.<Job>.<TaskGroup>.<AllocID>.<Task>.cpu.throttled_time
 	// nomad.client.allocs.<Job>.<TaskGroup>.<AllocID>.<Task>.cpu.total_ticks
 	rules.Match("nomad.client.allocs.{nomad_job}.{nomad_task_group}.{nomad_allocation_id}.{nomad_task}.cpu.{nomad_job_cpu_metric}", "nomad.allocation.cpu.{nomad_job_cpu_metric}")
+
+	rules.Drop("nomad.*")
 }
