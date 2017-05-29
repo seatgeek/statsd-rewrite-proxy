@@ -41,12 +41,29 @@ type StatsDMetric struct {
 	raw        string
 }
 
+// Rules ...
+type Rules struct {
+	list []*Rule
+}
+
+func (r *Rules) Match(ruleString, newPath string) {
+	r.list = append(r.list, NewMatchRule(ruleString, newPath))
+}
+
+func (r *Rules) Pass(ruleString string) {
+	r.list = append(r.list, NewPassRule(ruleString))
+}
+
+func (r *Rules) Ignore(ruleString string) {
+	r.list = append(r.list, NewIgnoreRule(ruleString))
+}
+
 var (
 	logger         = logrus.New()
 	listenPortHTTP = getHTTPListenPort()
 	workerChannel  = make(chan []byte)
 	quitChannel    = make(chan string)
-	rules          = make([]*CaputeRule, 0)
+	rules          = &Rules{}
 	noTags         = make([]string, 0) // pre-computed empty tags for fallthrough metrics
 )
 
@@ -56,9 +73,6 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	// parsePacketString("fabio.--frontend-node-renderer.frontend-node-renderer_service_bownty./.62_210_91_111_57029.std-dev:0")
-	// return
-
 	cfg := AppConfig{"0.0.0.0", 8126}
 
 	createRules()
@@ -66,9 +80,6 @@ func main() {
 	go startHTTPServer()
 	go listenUDP(cfg)
 
-	// go emitter()
-
-	// Start workers
 	workerCount := runtime.NumCPU()
 	for x := 0; x < workerCount; x++ {
 		go work(dataDogClient, x)
@@ -133,15 +144,41 @@ func work(dataDogClient *datadog.Client, workerID int) {
 					continue
 				}
 
-				found := false
+				relay := false
+				match := false
 
 				// loop our rewrite rules until we find a match
-				for _, rule := range rules {
+				for _, rule := range rules.list {
 					// try to match the metric to our rules
 					result := rule.FindStringSubmatchMap(metric.name)
 
-					// if no captures, move on
+					// If the rule didn't match the metric, keep searching
+					if result.action == "miss" {
+						continue
+					}
+
+					// If the result action is anything but "miss", we actually matched something!
+					match = true
+
+					// If the rule did match the metric, and it should be ignore, break out
+					if result.action == "ignore" {
+						break
+					}
+
+					// Relay the metric as-is
+					if result.action == "pass" {
+						relay = true
+						break
+					}
+
+					// If we get to here, we assume it's a match
+					if result.action != "match" {
+						panic(fmt.Sprintf("Unknown result action: %s", result.action))
+					}
+
+					// if no captures, keep searching
 					if len(result.Captures) == 0 {
+						logger.Warningf("Did match '%s' to '%s', but there was 0 capture groups", rule.name, rule.Regexp.String())
 						continue
 					}
 
@@ -157,17 +194,21 @@ func work(dataDogClient *datadog.Client, workerID int) {
 						dataDogClient.Gauge(result.name, metric.value, result.Tags, 1)
 					}
 
-					found = true
+					relay = false
 					break
 				}
 
-				if found {
+				if !relay {
 					continue
 				}
 
 				ruleHitsMiss.Add(1)
 
-				logger.Warnf("[%d] No match found for '%s', relaying unmodified", workerID, metric.name)
+				if !match {
+					logger.Warnf("[%d] No match found for '%s', relaying unmodified", workerID, metric.name)
+				} else {
+					logger.Debugf("[%d] relaying '%s' unmodified", workerID, metric.name)
+				}
 
 				switch metric.metricType {
 				case metricTypeCount:

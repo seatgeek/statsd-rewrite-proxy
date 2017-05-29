@@ -20,7 +20,7 @@ deploy-docker-build:
 		--rm \
 		-v ${PWD}:/go/src/github.com/bownty/statsd-rewrite-proxy \
 		--net=host \
-		golang:1.7-wheezy \
+		golang:1.8-wheezy \
 		bash -c "cd /go/src/github.com/bownty/statsd-rewrite-proxy ; make deploy-build-internal"
 
 .PHONY: deploy-build-internal

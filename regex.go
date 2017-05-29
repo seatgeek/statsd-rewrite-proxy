@@ -5,10 +5,11 @@ import "strings"
 
 import "fmt"
 
-// CaputeRule embed regexp.Regexp in a new type so we can extend it
-type CaputeRule struct {
+// Rule ...
+type Rule struct {
 	*regexp.Regexp
-	name string
+	name   string
+	action string
 }
 
 // RuleResult ...
@@ -16,14 +17,32 @@ type RuleResult struct {
 	Captures map[string]string
 	Tags     []string
 	name     string
+	action   string
 }
 
-// NewRule ...
-func NewRule(ruleString string, newPath string) *CaputeRule {
-	rule := &CaputeRule{}
-	rule.Regexp = buildRegexp(ruleString)
-	rule.name = newPath
-	return rule
+// NewMatchRule ...
+func NewMatchRule(ruleString string, newPath string) *Rule {
+	return &Rule{
+		action: "match",
+		Regexp: buildRegexp(ruleString),
+		name:   newPath,
+	}
+}
+
+// NewIgnoreRule ..
+func NewIgnoreRule(ruleString string) *Rule {
+	return &Rule{
+		action: "ignore",
+		Regexp: buildRegexp(ruleString),
+	}
+}
+
+// NewPassRule ...
+func NewPassRule(rulestring string) *Rule {
+	return &Rule{
+		action: "pass",
+		Regexp: buildRegexp(rulestring),
+	}
 }
 
 func buildRegexp(rule string) *regexp.Regexp {
@@ -49,28 +68,37 @@ func buildRegexp(rule string) *regexp.Regexp {
 }
 
 // FindStringSubmatchMap add a new method to our new regular expression type
-func (r *CaputeRule) FindStringSubmatchMap(s string) *RuleResult {
-	result := RuleResult{}
-	result.Captures = make(map[string]string, 0)
-	result.name = r.name
+func (r *Rule) FindStringSubmatchMap(s string) *RuleResult {
+	result := &RuleResult{
+		action: r.action,
+	}
 
 	match := r.FindStringSubmatch(s)
 	if match == nil {
-		return &result
+		result.action = "miss"
+		return result
 	}
 
+	if r.action == "skip" {
+		return result
+	}
+
+	if r.action == "pass" {
+		return result
+	}
+
+	result.Captures = make(map[string]string, 0)
+	result.name = r.name
+
 	for i, name := range r.SubexpNames() {
-		// Ignore the whole regexp match and unnamed groups
 		if i == 0 {
 			continue
 		}
 
-		// logger.Infof("name: %s", result.name)
 		result.Captures[name] = match[i]
 		result.Tags = append(result.Tags, fmt.Sprintf("%s:%s", name, match[i]))
 		result.name = strings.Replace(result.name, "{"+name+"}", match[i], -1)
 	}
-	// logger.Infof("name: %s", result.name)
 
-	return &result
+	return result
 }

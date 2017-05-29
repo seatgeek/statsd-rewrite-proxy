@@ -6,52 +6,57 @@ func createRules() {
 	 * Fabio Metrics
 	 *********************************************************************************************************************************************************/
 
-	// fabio.<service>.<host>.<path>.<target_host>.(count|min|max)
-	rules = append(rules, NewRule("fabio.{fabio_service}.{fabio_host}.{fabio_path}.{fabio_target_host}.count", "fabio.requests.count"))
-	rules = append(rules, NewRule("fabio.{fabio_service}.{fabio_host}.{fabio_path}.{fabio_target_host}.min", "fabio.requests.min"))
-	rules = append(rules, NewRule("fabio.{fabio_service}.{fabio_host}.{fabio_path}.{fabio_target_host}.max", "fabio.requests.max"))
+	rules.Match("fabio.{fabio_service}.*.{fabio_path}.*.count", "fabio.requests.count")
+	rules.Match("fabio.{fabio_service}.*.{fabio_path}.*.min", "fabio.requests.min")
+	rules.Match("fabio.{fabio_service}.*.{fabio_path}.*.max", "fabio.requests.max")
+	rules.Match("fabio.{fabio_service}.*.{fabio_path}.*.95_percentile", "fabio.requests.95_percentile")
+	rules.Match("fabio.{fabio_service}.*.{fabio_path}.*.99_percentile", "fabio.requests.99_percentile")
+	rules.Match("fabio.{fabio_service}.*.{fabio_path}.*.999_percentile", "fabio.requests.999_percentile")
 
-	// fabio.http.status.200.(count|min|max)
-	rules = append(rules, NewRule("fabio.http.status.{fabio_response_code}.count", "fabio.response_code.count"))
-	rules = append(rules, NewRule("fabio.http.status.{fabio_response_code}.min", "fabio.response_code.min"))
-	rules = append(rules, NewRule("fabio.http.status.{fabio_response_code}.max", "fabio.response_code.max"))
+	rules.Match("fabio.http.status.{fabio_response_code}.count", "fabio.http.response_code.count")
+	rules.Match("fabio.http.status.{fabio_response_code}.min", "fabio.http.response_code.min")
+	rules.Match("fabio.http.status.{fabio_response_code}.max", "fabio.http.response_code.max")
+	rules.Match("fabio.http.status.{fabio_response_code}.95_percentile", "fabio.http.response_code.95_percentile")
+	rules.Match("fabio.http.status.{fabio_response_code}.99_percentile", "fabio.http.response_code.99_percentile")
+	rules.Match("fabio.http.status.{fabio_response_code}.999_percentile", "fabio.http.response_code.999_percentile")
+	rules.Ignore("fabio.*")
 
 	/*********************************************************************************************************************************************************
 	 * Nomad Key Metrics
 	 *********************************************************************************************************************************************************/
 
 	// nomad.runtime.num_goroutines
-	rules = append(rules, NewRule("nomad.runtime.num_goroutines", "nomad.runtime.num_goroutines"))
+	rules.Pass("nomad.runtime.num_goroutines")
 
 	// nomad.runtime.alloc_bytes
-	rules = append(rules, NewRule("nomad.runtime.alloc_bytes", "nomad.runtime.alloc_bytes"))
+	rules.Pass("nomad.runtime.alloc_bytes")
 
 	// nomad.runtime.sys_bytes
-	rules = append(rules, NewRule("nomad.runtime.sys_bytes", "nomad.runtime.sys_bytes"))
+	rules.Pass("nomad.runtime.sys_bytes")
 
 	// nomad.runtime.malloc_count
-	rules = append(rules, NewRule("nomad.runtime.malloc_count", "nomad.runtime.malloc_count"))
+	rules.Pass("nomad.runtime.malloc_count")
 
 	// nomad.runtime.free_count
-	rules = append(rules, NewRule("nomad.runtime.free_count", "nomad.runtime.free_count"))
+	rules.Pass("nomad.runtime.free_count")
 
 	// nomad.runtime.heap_objects
-	rules = append(rules, NewRule("nomad.runtime.heap_objects", "nomad.runtime.heap_objects"))
+	rules.Pass("nomad.runtime.heap_objects")
 
 	// nomad.runtime.total_gc_pause_ns
-	rules = append(rules, NewRule("nomad.runtime.total_gc_pause_ns", "nomad.runtime.total_gc_pause_ns"))
+	rules.Pass("nomad.runtime.total_gc_pause_ns")
 
 	// nomad.runtime.total_gc_runs
-	rules = append(rules, NewRule("nomad.runtime.total_gc_runs", "nomad.runtime.total_gc_runs"))
+	rules.Pass("nomad.runtime.total_gc_runs")
 
 	// nomad.uptime
-	rules = append(rules, NewRule("nomad.uptime", "nomad.uptime"))
+	rules.Pass("nomad.uptime")
 
 	// nomad.client.uptime.<HostID>
-	rules = append(rules, NewRule("nomad.client.uptime.{nomad_client}", "nomad.client.uptime"))
+	rules.Match("nomad.client.uptime.{nomad_client}", "nomad.client.uptime")
 
 	// nomad.worker.invoke_scheduler.<type>
-	rules = append(rules, NewRule("nomad.worker.invoke_scheduler.{nomad_scheduler}", "nomad.worker.invoke_scheduler"))
+	rules.Match("nomad.worker.invoke_scheduler.{nomad_scheduler}", "nomad.worker.invoke_scheduler")
 
 	/*********************************************************************************************************************************************************
 	 * Nomad Host Metrics
@@ -61,69 +66,69 @@ func createRules() {
 	// nomad.client.host.cpu.<HostID>.<CPU-Core>.user
 	// nomad.client.host.cpu.<HostID>.<CPU-Core>.system
 	// nomad.client.host.cpu.<HostID>.<CPU-Core>.idle
-	rules = append(rules, NewRule("nomad.client.host.cpu.{nomad_client}.{nomad_client_cpu_core}.{nomad_cpu_metric}", "nomad.client.cpu.{nomad_cpu_metric}"))
+	rules.Match("nomad.client.host.cpu.{nomad_client}.{nomad_client_cpu_core}.{nomad_cpu_metric}", "nomad.client.cpu.{nomad_cpu_metric}")
 
 	// nomad.client.host.disk.<HostID>.<Device-Name>.size
 	// nomad.client.host.disk.<HostID>.<Device-Name>.used
 	// nomad.client.host.disk.<HostID>.<Device-Name>.available
 	// nomad.client.host.disk.<HostID>.<Device-Name>.used_percent
 	// nomad.client.host.disk.<HostID>.<Device-Name>.inodes_percent
-	rules = append(rules, NewRule("nomad.client.host.disk.{nomad_client}.{nomad_client_device}.{nomad_disk_metric}", "nomad.client.disk.{nomad_disk_metric}"))
+	rules.Match("nomad.client.host.disk.{nomad_client}.{nomad_client_device}.{nomad_disk_metric}", "nomad.client.disk.{nomad_disk_metric}")
 
 	// nomad.client.host.memory.<HostID>.total
 	// nomad.client.host.memory.<HostID>.available
 	// nomad.client.host.memory.<HostID>.used
 	// nomad.client.host.memory.<HostID>.free
-	rules = append(rules, NewRule("nomad.client.host.memory.{nomad_client}.{nomad_client_memory_metric}", "nomad.client.host.memory.{nomad_client_memory_metric}"))
+	rules.Match("nomad.client.host.memory.{nomad_client}.{nomad_client_memory_metric}", "nomad.client.host.memory.{nomad_client_memory_metric}")
 
 	// nomad.client.allocated.cpu.<HostID>
-	rules = append(rules, NewRule("nomad.client.allocated.cpu.{nomad_client}", "nomad.client.allocated.cpu"))
+	rules.Match("nomad.client.allocated.cpu.{nomad_client}", "nomad.client.allocated.cpu")
 
 	// nomad.client.allocated.memory.<HostID>
-	rules = append(rules, NewRule("nomad.client.allocated.memory.{nomad_client}", "nomad.client.allocated.memory"))
+	rules.Match("nomad.client.allocated.memory.{nomad_client}", "nomad.client.allocated.memory")
 
 	// nomad.client.allocated.disk.<HostID>
-	rules = append(rules, NewRule("nomad.client.allocated.disk.{nomad_client}", "nomad.client.allocated.disk"))
+	rules.Match("nomad.client.allocated.disk.{nomad_client}", "nomad.client.allocated.disk")
 
 	// nomad.client.allocated.iops.<HostID>
-	rules = append(rules, NewRule("nomad.client.allocated.iops.{nomad_client}", "nomad.client.allocated.iops"))
+	rules.Match("nomad.client.allocated.iops.{nomad_client}", "nomad.client.allocated.iops")
 
 	// nomad.client.allocated.network.<Device-Name>.<HostID>
-	rules = append(rules, NewRule("nomad.client.allocated.network.{nomad_device_name}.{nomad_client}", "nomad.client.allocated.network"))
+	rules.Match("nomad.client.allocated.network.{nomad_device_name}.{nomad_client}", "nomad.client.allocated.network")
 
 	// nomad.client.unallocated.cpu.<HostID>
-	rules = append(rules, NewRule("nomad.client.unallocated.cpu.{nomad_client}", "nomad.client.unallocated.cpu"))
+	rules.Match("nomad.client.unallocated.cpu.{nomad_client}", "nomad.client.unallocated.cpu")
 
 	// nomad.client.unallocated.memory.<HostID>
-	rules = append(rules, NewRule("nomad.client.unallocated.memory.{nomad_client}", "nomad.client.unallocated.memory"))
+	rules.Match("nomad.client.unallocated.memory.{nomad_client}", "nomad.client.unallocated.memory")
 
 	// nomad.client.unallocated.disk.<HostID>
-	rules = append(rules, NewRule("nomad.client.unallocated.disk.{nomad_client}", "nomad.client.unallocated.disk"))
+	rules.Match("nomad.client.unallocated.disk.{nomad_client}", "nomad.client.unallocated.disk")
 
 	// nomad.client.unallocated.iops.<HostID>
-	rules = append(rules, NewRule("nomad.client.unallocated.iops.{nomad_client}", "nomad.client.unallocated.iops"))
+	rules.Match("nomad.client.unallocated.iops.{nomad_client}", "nomad.client.unallocated.iops")
 
 	// nomad.client.unallocated.network.<Device-Name>.<HostID>
-	rules = append(rules, NewRule("nomad.client.unallocated.network.{nomad_device_name}.{nomad_client}", "nomad.client.unallocated.network"))
+	rules.Match("nomad.client.unallocated.network.{nomad_device_name}.{nomad_client}", "nomad.client.unallocated.network")
 
 	/*********************************************************************************************************************************************************
 	 * Nomad Allocation Metrics
 	 *********************************************************************************************************************************************************/
 
 	// nomad.client.allocations.migrating.<HostID>
-	rules = append(rules, NewRule("nomad.client.allocations.migrating.{nomad_client}", "nomad.client.allocations.migrating"))
+	rules.Match("nomad.client.allocations.migrating.{nomad_client}", "nomad.client.allocations.migrating")
 
 	// nomad.client.allocations.blocked.<HostID>
-	rules = append(rules, NewRule("nomad.client.allocations.blocked.{nomad_client}", "nomad.client.allocations.blocked"))
+	rules.Match("nomad.client.allocations.blocked.{nomad_client}", "nomad.client.allocations.blocked")
 
 	// nomad.client.allocations.pending.<HostID>
-	rules = append(rules, NewRule("nomad.client.allocations.pending.{nomad_client}", "nomad.client.allocations.pending"))
+	rules.Match("nomad.client.allocations.pending.{nomad_client}", "nomad.client.allocations.pending")
 
 	// nomad.client.allocations.running.<HostID>
-	rules = append(rules, NewRule("nomad.client.allocations.running.{nomad_client}", "nomad.client.allocations.running"))
+	rules.Match("nomad.client.allocations.running.{nomad_client}", "nomad.client.allocations.running")
 
 	// nomad.client.allocations.terminal.<HostID>
-	rules = append(rules, NewRule("nomad.client.allocations.terminal.{nomad_client}", "nomad.client.allocations.terminal"))
+	rules.Match("nomad.client.allocations.terminal.{nomad_client}", "nomad.client.allocations.terminal")
 
 	// nomad.client.allocs.<Job>.<TaskGroup>.<AllocID>.<Task>.memory.rss
 	// nomad.client.allocs.<Job>.<TaskGroup>.<AllocID>.<Task>.memory.cache
@@ -131,12 +136,12 @@ func createRules() {
 	// nomad.client.allocs.<Job>.<TaskGroup>.<AllocID>.<Task>.memory.max_usage
 	// nomad.client.allocs.<Job>.<TaskGroup>.<AllocID>.<Task>.memory.kernel_usage
 	// nomad.client.allocs.<Job>.<TaskGroup>.<AllocID>.<Task>.memory.kernel_max_usage
-	rules = append(rules, NewRule("nomad.client.allocs.{nomad_job}.{nomad_task_group}.{nomad_allocation_id}.{nomad_task}.memory.{nomad_job_memory_metric}", "nomad.allocation.memory.{nomad_job_memory_metric}"))
+	rules.Match("nomad.client.allocs.{nomad_job}.{nomad_task_group}.{nomad_allocation_id}.{nomad_task}.memory.{nomad_job_memory_metric}", "nomad.allocation.memory.{nomad_job_memory_metric}")
 
 	// nomad.client.allocs.<Job>.<TaskGroup>.<AllocID>.<Task>.cpu.total_percent
 	// nomad.client.allocs.<Job>.<TaskGroup>.<AllocID>.<Task>.cpu.system
 	// nomad.client.allocs.<Job>.<TaskGroup>.<AllocID>.<Task>.cpu.user
 	// nomad.client.allocs.<Job>.<TaskGroup>.<AllocID>.<Task>.cpu.throttled_time
 	// nomad.client.allocs.<Job>.<TaskGroup>.<AllocID>.<Task>.cpu.total_ticks
-	rules = append(rules, NewRule("nomad.client.allocs.{nomad_job}.{nomad_task_group}.{nomad_allocation_id}.{nomad_task}.cpu.{nomad_job_cpu_metric}", "nomad.allocation.cpu.{nomad_job_cpu_metric}"))
+	rules.Match("nomad.client.allocs.{nomad_job}.{nomad_task_group}.{nomad_allocation_id}.{nomad_task}.cpu.{nomad_job_cpu_metric}", "nomad.allocation.cpu.{nomad_job_cpu_metric}")
 }

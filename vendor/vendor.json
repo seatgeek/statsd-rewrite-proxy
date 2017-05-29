@@ -21,7 +21,7 @@
 			"revisionTime": "2017-01-06T22:16:01Z"
 		},
 		{
-			"checksumSHA1": "uTQtOqR0ePMMcvuvAIksiIZxhqU=",
+			"checksumSHA1": "Xhsm+TevJogC8U4sG6FO+czBMps=",
 			"path": "golang.org/x/sys/unix",
 			"revision": "d75a52659825e75fff6158388dddc6a5b04f9ba5",
 			"revisionTime": "2016-12-14T18:38:57Z"
@@ -33,5 +33,5 @@
 			"revisionTime": "2016-09-28T15:37:09Z"
 		}
 	],
-	"rootPath": "github.com/bownty/statsd-rewrite-proxy"
+	"rootPath": "github.com/seatgeek/statsd-rewrite-proxy"
 }
