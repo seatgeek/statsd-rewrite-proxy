@@ -128,42 +128,39 @@ func createRules() {
 	 * Nomad Key Metrics
 	 *********************************************************************************************************************************************************/
 
-	// nomad.runtime.num_goroutines
-	rules.Relay("nomad.runtime.num_goroutines")
+	// nomad.runtime.*
+	rules.Relay("nomad.runtime.*")
 
-	// nomad.runtime.alloc_bytes
-	rules.Relay("nomad.runtime.alloc_bytes")
+	// nomad.raft.*
+	rules.Relay("nomad.raft.*")
 
-	// nomad.runtime.sys_bytes
-	rules.Relay("nomad.runtime.sys_bytes")
+	// nomad.broker.*
+	rules.Relay("nomad.broker.*")
 
-	// nomad.runtime.malloc_count
-	rules.Relay("nomad.runtime.malloc_count")
-
-	// nomad.runtime.free_count
-	rules.Relay("nomad.runtime.free_count")
-
-	// nomad.runtime.heap_objects
-	rules.Relay("nomad.runtime.heap_objects")
-
-	// nomad.runtime.total_gc_pause_ns
-	rules.Relay("nomad.runtime.total_gc_pause_ns")
-
-	// nomad.runtime.total_gc_runs
-	rules.Relay("nomad.runtime.total_gc_runs")
+	// nomad.plan.*
+	rules.Relay("nomad.plan.*")
 
 	// nomad.uptime
 	rules.Relay("nomad.uptime")
 
-	// nomad.client.uptime.<HostID>
-	rules.Match("nomad.client.uptime.{nomad_client}", "nomad.client.uptime")
+	// nomad.worker.wait_for_index
+	rules.Relay("nomad.worker.wait_for_index")
 
 	// nomad.worker.invoke_scheduler.<type>
 	rules.Match("nomad.worker.invoke_scheduler.{nomad_scheduler}", "nomad.worker.invoke_scheduler")
 
+	// nomad.heartbeat.*
+	rules.Relay("nomad.heartbeat.*")
+
+	// nomad.rpc.*
+	rules.Relay("nomad.rpc.*")
+
 	/*********************************************************************************************************************************************************
 	 * Nomad Host Metrics
 	 *********************************************************************************************************************************************************/
+
+	// nomad.client.uptime.<HostID>
+	rules.Match("nomad.client.uptime.{nomad_client}", "nomad.client.uptime")
 
 	// nomad.client.host.cpu.<HostID>.<CPU-Core>.total
 	// nomad.client.host.cpu.<HostID>.<CPU-Core>.user
