@@ -4,6 +4,7 @@ GET_GOOS   		 = $(word 1,$(subst -, ,$1))
 GOBUILD   		?= $(shell go env GOOS)-$(shell go env GOARCH)
 GOFILES_NOVENDOR = $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 VETARGS? 		 =-all
+COMMIT		    ?=latest
 
 $(BUILD_DIR):
 	mkdir -p $@
@@ -48,3 +49,10 @@ $(BINARIES): $(BUILD_DIR)/statsd-rewrite-proxy-%: $(BUILD_DIR)
 dist: install fmt vet
 	@echo "=> building ..."
 	$(MAKE) -j $(BINARIES)
+
+.PHONY: docker
+docker:
+	@echo "=> build and push Docker image ..."
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 govendor build -o build/statsd-rewrite-proxy-linux-amd64
+	docker build -f Dockerfile -t seatgeek/statsd-rewrite-proxy:$(COMMIT) .
+	docker push seatgeek/statsd-rewrite-proxy:$(COMMIT)
