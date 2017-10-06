@@ -105,29 +105,37 @@ func (r *Rule) FindStringSubmatchMap(s string) *RuleResult {
 func createRules() {
 
 	/*********************************************************************************************************************************************************
-	 * Fabio Metrics
+	 * Vault Metrics
 	 *********************************************************************************************************************************************************/
 
-	rules.Match("fabio.{fabio_service}.*.{fabio_path}.*.count", "fabio.requests.count")
-	rules.Match("fabio.{fabio_service}.*.{fabio_path}.*.min", "fabio.requests.min")
-	rules.Match("fabio.{fabio_service}.*.{fabio_path}.*.max", "fabio.requests.max")
-	rules.Match("fabio.{fabio_service}.*.{fabio_path}.*.95_percentile", "fabio.requests.95_percentile")
-	rules.Match("fabio.{fabio_service}.*.{fabio_path}.*.99_percentile", "fabio.requests.99_percentile")
-	rules.Match("fabio.{fabio_service}.*.{fabio_path}.*.999_percentile", "fabio.requests.999_percentile")
+	// internal metrics
+	rules.Match("vault.runtime.{vault_runtime_type}", "vault.runtime")
+	rules.Match("vault.audit.{vault_audit_type}", "vault.audit")
+	rules.Match("vault.barrier.{vault_barrier_type}", "vault.barrier")
+	rules.Match("vault.consul.{vault_consul_type}", "vault.consul")
+	rules.Match("vault.core.{vault_core_type}", "vault.core")
 
-	rules.Match("fabio.http.status.{fabio_response_code}.count", "fabio.http.response_code.count")
-	rules.Match("fabio.http.status.{fabio_response_code}.min", "fabio.http.response_code.min")
-	rules.Match("fabio.http.status.{fabio_response_code}.max", "fabio.http.response_code.max")
-	rules.Match("fabio.http.status.{fabio_response_code}.95_percentile", "fabio.http.response_code.95_percentile")
-	rules.Match("fabio.http.status.{fabio_response_code}.99_percentile", "fabio.http.response_code.99_percentile")
-	rules.Match("fabio.http.status.{fabio_response_code}.999_percentile", "fabio.http.response_code.999_percentile")
+	// policy and token metrics
+	rules.Match("vault.expire.{vault_expire_type}", "vault.expire")
+	rules.Match("vault.policy.{vault_policy_type}", "vault.policy")
+	rules.Match("vault.token.{vault_token_type}", "vault.token")
 
-	rules.Drop("fabio.*")
+	// authentication
+	rules.Match("vault.rollback.attempt.{vault_auth_backend}", "vault.authentication.attempt")
+	rules.Match("vault.route.rollback.{vault_auth_backend}", "vault.authentication.rollback")
 
-	/*********************************************************************************************************************************************************
-	 * Vault Key Metrics
-	 *********************************************************************************************************************************************************/
+	// storage backends
+	rules.Match("vault.azure.{vault_storage_action}", "vault.storage.azure")
+	rules.Match("vault.dynamodb.{vault_storage_action}", "vault.storage.storage")
+	rules.Match("vault.etcd.{vault_storage_action}", "vault.storage.etcd")
+	rules.Match("vault.gcs.{vault_storage_action}", "vault.storage.gcs")
+	rules.Match("vault.mysql.{vault_storage_action}", "vault.storage.mysql")
+	rules.Match("vault.postgres.{vault_storage_action}", "vault.storage.postgres")
+	rules.Match("vault.s3.{vault_storage_action}", "vault.storage.s3")
+	rules.Match("vault.swift.{vault_storage_action}", "vault.storage.swift")
+	rules.Match("vault.zookeeper.{vault_storage_action}", "vault.storage.zookeeper")
 
+	// Drop anything we didn't match
 	rules.Relay("vault.*")
 
 	/*********************************************************************************************************************************************************
@@ -252,4 +260,24 @@ func createRules() {
 	rules.Match("nomad.client.allocs.{nomad_job}.{nomad_task_group}.{nomad_allocation_id}.{nomad_task}.cpu.{nomad_job_cpu_metric}", "nomad.allocation.cpu.{nomad_job_cpu_metric}")
 
 	rules.Drop("nomad.*")
+
+	/*********************************************************************************************************************************************************
+	 * Fabio Metrics
+	 *********************************************************************************************************************************************************/
+
+	rules.Match("fabio.{fabio_service}.*.{fabio_path}.*.count", "fabio.requests.count")
+	rules.Match("fabio.{fabio_service}.*.{fabio_path}.*.min", "fabio.requests.min")
+	rules.Match("fabio.{fabio_service}.*.{fabio_path}.*.max", "fabio.requests.max")
+	rules.Match("fabio.{fabio_service}.*.{fabio_path}.*.95_percentile", "fabio.requests.95_percentile")
+	rules.Match("fabio.{fabio_service}.*.{fabio_path}.*.99_percentile", "fabio.requests.99_percentile")
+	rules.Match("fabio.{fabio_service}.*.{fabio_path}.*.999_percentile", "fabio.requests.999_percentile")
+
+	rules.Match("fabio.http.status.{fabio_response_code}.count", "fabio.http.response_code.count")
+	rules.Match("fabio.http.status.{fabio_response_code}.min", "fabio.http.response_code.min")
+	rules.Match("fabio.http.status.{fabio_response_code}.max", "fabio.http.response_code.max")
+	rules.Match("fabio.http.status.{fabio_response_code}.95_percentile", "fabio.http.response_code.95_percentile")
+	rules.Match("fabio.http.status.{fabio_response_code}.99_percentile", "fabio.http.response_code.99_percentile")
+	rules.Match("fabio.http.status.{fabio_response_code}.999_percentile", "fabio.http.response_code.999_percentile")
+
+	rules.Drop("fabio.*")
 }

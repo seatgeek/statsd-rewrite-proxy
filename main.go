@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	// UDP packet limit, see
+	// UDP_MAX_PACKET_SIZE packet limit, see
 	// https://en.wikipedia.org/wiki/User_Datagram_Protocol#Packet_structure
 	UDP_MAX_PACKET_SIZE int = 64 * 1024
 )
@@ -46,6 +46,8 @@ var (
 	rules          = &Rules{}
 	noTags         = make([]string, 0) // pre-computed empty tags for fallthrough metrics
 
+	debug bool
+
 	counterProcessed int64
 	counterRewritten int64
 	counterRelayed   int64
@@ -56,6 +58,11 @@ var (
 )
 
 func main() {
+	if os.Getenv("DEBUG") != "" {
+		logger.Level = logrus.DebugLevel
+		debug = true
+	}
+
 	dataDogClient, err := datadog.NewBuffered("127.0.0.1:8125", 10)
 	if err != nil {
 		logger.Fatal(err)
@@ -213,7 +220,9 @@ func work(dataDogClient *datadog.Client, workerID int) {
 						counterRewritten = counterRewritten + 1
 						ruleHitsSuccess.Add(1)
 
-						logger.Debugf("[%d] Found match for '%s', emitting as '%s'", workerID, metric.name, result.name)
+						if debug {
+							logger.Debugf("[%d] Found match for '%s', emitting as '%s'", workerID, metric.name, result.name)
+						}
 
 						switch metric.metricType {
 						case "c":
@@ -243,7 +252,7 @@ func work(dataDogClient *datadog.Client, workerID int) {
 					if !match {
 						logger.Warnf("[%d] No match found for '%s', relaying unmodified", workerID, metric.name)
 						countersMissed = countersMissed + 1
-					} else {
+					} else if debug {
 						logger.Debugf("[%d] relaying '%s' unmodified", workerID, metric.name)
 					}
 
