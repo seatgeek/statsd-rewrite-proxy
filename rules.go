@@ -122,7 +122,11 @@ func createRules() {
 
 	// authentication
 	rules.Match("vault.rollback.attempt.{vault_auth_backend}", "vault.authentication.attempt")
+	rules.Match("vault.route.read.{vault_auth_backend}", "vault.authentication.read")
+	rules.Match("vault.route.renew.{vault_auth_backend}", "vault.authentication.renew")
+	rules.Match("vault.route.revoke.{vault_auth_backend}", "vault.authentication.revoke")
 	rules.Match("vault.route.rollback.{vault_auth_backend}", "vault.authentication.rollback")
+	rules.Match("vault.route.update.{vault_auth_backend}", "vault.authentication.update")
 
 	// storage backends
 	rules.Match("vault.azure.{vault_storage_action}", "vault.storage.azure")
